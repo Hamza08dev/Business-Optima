@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: business-optima-pdf-analysis
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python - << 'PY'
+import os
+from fastembed import TextEmbedding
+cache_dir = os.environ.get('FASTEMBED_CACHE_PATH', 'models')
+os.makedirs(cache_dir, exist_ok=True)
+# Prefetch model to cache so runtime doesn't download
+TextEmbedding(model_name='BAAI/bge-small-en-v1.5', max_length=512, cache_dir=cache_dir)
+print('FastEmbed model cached at', cache_dir)
+PY
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.0
+      - key: OMP_NUM_THREADS
+        value: 1
+      - key: OPENBLAS_NUM_THREADS
+        value: 1
+      - key: MKL_NUM_THREADS
+        value: 1
+      - key: NUMEXPR_NUM_THREADS
+        value: 1
+      - key: FASTEMBED_CACHE_PATH
+        value: models
+    plan: free
+    healthCheckPath: /health

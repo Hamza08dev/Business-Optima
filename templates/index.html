@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Optima - PDF Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #edf2f7;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #4a5568;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background-color: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background-color: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .status.info {
+            background-color: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f7fafc;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .chat-message.user {
+            background-color: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-message.assistant {
+            background-color: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .summary-container {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #edf2f7;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .summary-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .summary-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Business Optima</h1>
+            <p>AI-Powered PDF Analysis & Enhanced Summarization</p>
+            <!-- Same-origin API; no remote config needed for Spaces/local -->
+        </div>
+
+        <div class="main-content">
+            <!-- PDF Upload Section -->
+            <div class="card">
+                <h2>📄 PDF Upload</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drop your PDF here or click to browse</div>
+                    <div class="upload-hint">Supports documents up to 200 pages</div>
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                </div>
+                
+                <button class="btn" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
+                    Choose PDF File
+                </button>
+                
+                <div id="uploadStatus"></div>
+                
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-item">
+                        <div class="stat-number" id="chunkCount">0</div>
+                        <div class="stat-label">Text Chunks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="textLength">0</div>
+                        <div class="stat-label">Characters</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat & Summary Section -->
+            <div class="card">
+                <h2>💬 Document Chat & Summary</h2>
+                <div class="chat-container" id="chatContainer">
+                    <div class="chat-message assistant">
+                        👋 Hello! Upload a PDF document to start asking questions or generate a comprehensive summary.
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Ask a question about your document..." disabled>
+                    <button class="btn" id="chatBtn" disabled>Send</button>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-success" id="summaryBtn" disabled>
+                        📝 Generate Enhanced Summary (2-3 Pages)
+                    </button>
+                </div>
+                
+                <div id="summaryContainer" style="display: none;">
+                    <div class="summary-stats" id="summaryStats">
+                        <span>📊 Summary Statistics</span>
+                        <span id="summaryLength">0 characters</span>
+                    </div>
+                    
+                    <h3 style="margin: 15px 0 10px 0;">Document Summary</h3>
+                    <div class="summary-container" id="summaryText"></div>
+                    
+                    <div class="summary-actions">
+                        <button class="btn btn-info" id="downloadPdfBtn">
+                            📥 Download Summary as PDF
+                        </button>
+                        <button class="btn btn-secondary" id="copySummaryBtn">
+                            📋 Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Same-origin API for local + HF Spaces
+        const API_BASE = window.location.origin.replace(/\/$/, '');
+
+        let isDocumentLoaded = false;
+        let isProcessing = false;
+        let currentSummary = "";
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const chatInput = document.getElementById('chatInput');
+        const chatBtn = document.getElementById('chatBtn');
+        const summaryBtn = document.getElementById('summaryBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        const summaryContainer = document.getElementById('summaryContainer');
+        const summaryText = document.getElementById('summaryText');
+        const summaryStats = document.getElementById('summaryStats');
+        const summaryLength = document.getElementById('summaryLength');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const copySummaryBtn = document.getElementById('copySummaryBtn');
+        const stats = document.getElementById('stats');
+        const chunkCount = document.getElementById('chunkCount');
+        const textLength = document.getElementById('textLength');
+
+        // Allow user to set API URL (stored in localStorage)
+        // No remote API configuration needed
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showStatus('Please select a PDF file.', 'error');
+                return;
+            }
+
+            uploadFile(file);
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            isProcessing = true;
+            updateUIState();
+            showStatus('Processing PDF... This may take a few minutes for large documents.', 'info');
+
+            fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showStatus(data.error, 'error');
+                } else {
+                    showStatus(data.message, 'success');
+                    isDocumentLoaded = true;
+                    updateStats(data.chunks, data.text_length);
+                    updateUIState();
+                    addChatMessage('assistant', '✅ Document loaded successfully! You can now ask questions or generate an enhanced summary.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('Error uploading file. Please try again.', 'error');
+            })
+            .finally(() => {
+                isProcessing = false;
+                updateUIState();
+            });
+        }
+
+        function updateStats(chunks, textLength) {
+            chunkCount.textContent = chunks;
+            textLength.textContent = textLength.toLocaleString();
+            stats.style.display = 'grid';
+        }
+
+        function updateUIState() {
+            const canInteract = isDocumentLoaded && !isProcessing;
+            chatInput.disabled = !canInteract;
+            chatBtn.disabled = !canInteract;
+            summaryBtn.disabled = !canInteract;
+            uploadBtn.disabled = isProcessing;
+        }
+
+        function showStatus(message, type) {
+            uploadStatus.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Chat functionality
+        chatBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message || !isDocumentLoaded) return;
+
+            addChatMessage('user', message);
+            chatInput.value = '';
+
+            // Show loading state
+            const loadingMessage = addChatMessage('assistant', '<span class="loading"></span>Processing your question...');
+
+            fetch(`${API_BASE}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    updateChatMessage(loadingMessage, 'assistant', '❌ ' + data.error);
+                } else {
+                    updateChatMessage(loadingMessage, 'assistant', data.response);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateChatMessage(loadingMessage, 'assistant', '❌ Error processing your question. Please try again.');
+            });
+        }
+
+        function addChatMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.innerHTML = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+
+        function updateChatMessage(messageDiv, type, content) {
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.innerHTML = content;
+        }
+
+        // Summary functionality
+        summaryBtn.addEventListener('click', generateSummary);
+
+        function generateSummary() {
+            if (!isDocumentLoaded) return;
+
+            summaryBtn.disabled = true;
+            summaryBtn.innerHTML = '<span class="loading"></span>Generating Enhanced Summary...';
+
+            fetch(`${API_BASE}/summarize`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showStatus(data.error, 'error');
+                } else {
+                    currentSummary = data.summary;
+                    summaryText.textContent = data.summary;
+                    summaryLength.textContent = `${data.summary_length.toLocaleString()} characters`;
+                    summaryContainer.style.display = 'block';
+                    addChatMessage('assistant', `📝 Enhanced summary generated in ${data.processing_time}! Summary length: ${data.summary_length.toLocaleString()} characters (target: ${data.target_length.toLocaleString()})`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('Error generating summary. Please try again.', 'error');
+            })
+            .finally(() => {
+                summaryBtn.disabled = false;
+                summaryBtn.innerHTML = '📝 Generate Enhanced Summary (3-4 Pages)';
+            });
+        }
+
+        // PDF Download functionality
+        downloadPdfBtn.addEventListener('click', downloadSummaryPdf);
+
+        function downloadSummaryPdf() {
+            if (!currentSummary) {
+                showStatus('No summary available to download.', 'error');
+                return;
+            }
+
+            downloadPdfBtn.disabled = true;
+            downloadPdfBtn.innerHTML = '<span class="loading"></span>Generating PDF...';
+
+            fetch(`${API_BASE}/download-summary`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to download PDF');
+                    });
+                }
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'document_summary.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                addChatMessage('assistant', '✅ PDF summary downloaded successfully!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('Error downloading PDF: ' + error.message, 'error');
+            })
+            .finally(() => {
+                downloadPdfBtn.disabled = false;
+                downloadPdfBtn.innerHTML = '📥 Download Summary as PDF';
+            });
+        }
+
+        // Copy to clipboard functionality
+        copySummaryBtn.addEventListener('click', copySummaryToClipboard);
+
+        function copySummaryToClipboard() {
+            if (!currentSummary) {
+                showStatus('No summary available to copy.', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(currentSummary).then(() => {
+                addChatMessage('assistant', '✅ Summary copied to clipboard!');
+                copySummaryBtn.innerHTML = '✅ Copied!';
+                setTimeout(() => {
+                    copySummaryBtn.innerHTML = '📋 Copy to Clipboard';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showStatus('Failed to copy to clipboard.', 'error');
+            });
+        }
+
+        // Initialize UI state
+        updateUIState();
+    </script>
+</body>
+</html>
